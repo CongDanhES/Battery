@@ -51,26 +51,26 @@ lv_obj_t* Display::g_obj[NUM_OBJ] = {nullptr};
 lv_style_t Display::g_style[NUM_STYLE];
 lv_style_t Display::g_font[NUM_FONT];
 
-lv_obj_t* Display::BOOT_PAGE::logo = nullptr; // Hoặc giá trị khởi tạo khác nếu cần
-lv_anim_t* Display::BOOT_PAGE::animation = nullptr; // Hoặc giá trị khởi tạo khác nếu cần
+// lv_obj_t* Display::BOOT_PAGE::logo = nullptr; // Hoặc giá trị khởi tạo khác nếu cần
+// lv_anim_t* Display::BOOT_PAGE::animation = nullptr; // Hoặc giá trị khởi tạo khác nếu cần
 
-lv_style_t Display::FIX_FRAME::main_panel_style ;
-lv_obj_t *Display::FIX_FRAME::main_panel = nullptr;
-bool Display::FIX_FRAME::checkCreate = true;
-lv_obj_t *Display::FIX_FRAME::lb_status_obj = nullptr;
-String Display::FIX_FRAME::lb_status_str = "";
-lv_obj_t *Display::FIX_FRAME::img_clock_obj = nullptr;
-lv_obj_t *Display::FIX_FRAME::lb_clock_obj = nullptr;
-lv_style_t Display::FIX_FRAME::font_vni_n;
-lv_style_t Display::FIX_FRAME::font_vni_g_b;
-lv_obj_t* Display::FIX_FRAME::logo_charge = nullptr;
+// lv_style_t Display::FIX_FRAME::main_panel_style ;
+// lv_obj_t *Display::FIX_FRAME::main_panel = nullptr;
+// bool Display::FIX_FRAME::checkCreate = true;
+// lv_obj_t *Display::FIX_FRAME::lb_status_obj = nullptr;
+// String Display::FIX_FRAME::lb_status_str = "";
+// lv_obj_t *Display::FIX_FRAME::img_clock_obj = nullptr;
+// lv_obj_t *Display::FIX_FRAME::lb_clock_obj = nullptr;
+// lv_style_t Display::FIX_FRAME::font_vni_n;
+// lv_style_t Display::FIX_FRAME::font_vni_g_b;
+// lv_obj_t* Display::FIX_FRAME::logo_charge = nullptr;
 
-uint8_t Display::MAIN_PAGE::step = 0;
-lv_point_t Display::MAIN_PAGE::line_points[] = { {0, 0}, {0, (int32_t)(ESP_PANEL_LCD_V_RES*0.73)}};
-lv_point_t Display::MAIN_PAGE::line_points1[] = { {0, 0}, {(int32_t)(ESP_PANEL_LCD_H_RES*0.94), 0}};
-lv_point_t Display::MAIN_PAGE::line_pointsPW1[] = { {0, 0}, {34, 0}};
-lv_point_t Display::MAIN_PAGE::line_pointsPW2[] = { {0, 0}, {34, 0}};
-bool Display::MAIN_PAGE::checkCreate = true;
+// uint8_t Display::MAIN_PAGE::step = 0;
+// lv_point_t Display::MAIN_PAGE::line_points[] = { {0, 0}, {0, (int32_t)(ESP_PANEL_LCD_V_RES*0.73)}};
+// lv_point_t Display::MAIN_PAGE::line_points1[] = { {0, 0}, {(int32_t)(ESP_PANEL_LCD_H_RES*0.94), 0}};
+// lv_point_t Display::MAIN_PAGE::line_pointsPW1[] = { {0, 0}, {34, 0}};
+// lv_point_t Display::MAIN_PAGE::line_pointsPW2[] = { {0, 0}, {34, 0}};
+// bool Display::MAIN_PAGE::checkCreate = true;
 
 uint8_t Display::BATTERY_DJI_PAGE::step = 0;
 lv_color_t Display::BATTERY_DJI_PAGE::battery_color_percent;
@@ -79,8 +79,8 @@ lv_style_t Display::BATTERY_DJI_PAGE::cell_style_bg[BMS_CELL_NUM] = {};
 lv_obj_t  *Display::BATTERY_DJI_PAGE::cell_bar[BMS_CELL_NUM] = {nullptr};
 lv_obj_t  *Display::BATTERY_DJI_PAGE::cell_lb[BMS_CELL_NUM] = {nullptr};
 
-uint8_t Display::SYSTEM_PAGE::step = 0;
-String Display::SYSTEM_PAGE::s_temp = "";
+// uint8_t Display::SYSTEM_PAGE::step = 0;
+// String Display::SYSTEM_PAGE::s_temp = "";
 
 Display::Display(HardwareSerial &debugPort) 
 {

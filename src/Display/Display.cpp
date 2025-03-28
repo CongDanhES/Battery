@@ -29,21 +29,6 @@ uint8_t Display::batfr::led[2] = {0, 0};
 int Display::batfr::seconds[2] = {0, 0};
 int Display::batfr::minutes[2] = {0, 0};
 
-float Display::sysfr::input_voltage[3] = {0.0};
-float Display::sysfr::input_freq[3] = {0.0};
-float Display::sysfr::input_current[3] = {0.0};
-float Display::sysfr::input_temp[3] = {0.0};
-float Display::sysfr::efficiency[3] = {0.0};
-float Display::sysfr::output_voltage[3] = {0.0};
-float Display::sysfr::output_current[3] = {0.0};
-float Display::sysfr::output_current_max[3] = {0.0};
-float Display::sysfr::output_temp[3] = {0.0};
-uint8_t Display::sysfr::num_ins = 0;
-String Display::sysfr::e_version = "";
-String Display::sysfr::e_sn = "";
-String Display::sysfr::d_version = "";
-String Display::sysfr::d_param = "";
-
 // Định nghĩa các thành viên tĩnh
 lv_obj_t* Display::g_value[NUM_OBJ_TITLE] = {nullptr};
 lv_obj_t* Display::g_title[NUM_OBJ_VALUE] = {nullptr};
@@ -54,16 +39,19 @@ lv_style_t Display::g_font[NUM_FONT];
 // lv_obj_t* Display::BOOT_PAGE::logo = nullptr; // Hoặc giá trị khởi tạo khác nếu cần
 // lv_anim_t* Display::BOOT_PAGE::animation = nullptr; // Hoặc giá trị khởi tạo khác nếu cần
 
-// lv_style_t Display::FIX_FRAME::main_panel_style ;
-// lv_obj_t *Display::FIX_FRAME::main_panel = nullptr;
-// bool Display::FIX_FRAME::checkCreate = true;
-// lv_obj_t *Display::FIX_FRAME::lb_status_obj = nullptr;
-// String Display::FIX_FRAME::lb_status_str = "";
-// lv_obj_t *Display::FIX_FRAME::img_clock_obj = nullptr;
-// lv_obj_t *Display::FIX_FRAME::lb_clock_obj = nullptr;
-// lv_style_t Display::FIX_FRAME::font_vni_n;
-// lv_style_t Display::FIX_FRAME::font_vni_g_b;
-// lv_obj_t* Display::FIX_FRAME::logo_charge = nullptr;
+lv_style_t Display::FIX_FRAME::main_panel_style ;
+lv_obj_t *Display::FIX_FRAME::main_panel = nullptr;
+bool Display::FIX_FRAME::checkCreate = true;
+lv_obj_t *Display::FIX_FRAME::lb_status_obj = nullptr;
+String Display::FIX_FRAME::lb_status_str = "";
+lv_obj_t *Display::FIX_FRAME::img_clock_obj = nullptr;
+lv_obj_t *Display::FIX_FRAME::lb_clock_obj = nullptr;
+lv_style_t Display::FIX_FRAME::font_vni_n;
+lv_style_t Display::FIX_FRAME::font_vni_g_b;
+lv_obj_t* Display::FIX_FRAME::logo_charge = nullptr;
+
+// update logo
+lv_obj_t* Display::FIX_FRAME::logo = nullptr;
 
 // uint8_t Display::MAIN_PAGE::step = 0;
 // lv_point_t Display::MAIN_PAGE::line_points[] = { {0, 0}, {0, (int32_t)(ESP_PANEL_LCD_V_RES*0.73)}};
@@ -235,6 +223,10 @@ void Display::lvgl_port_task(void *arg)
     unsigned long previousMillis; // Lưu thời gian trước đó
     int lv_sys_seconds; // Biến đếm giây
     int lv_sys_minutes; // Biến đếm phút
+
+    // ceate fix frame to display
+    FIX_FRAME::onCreate();
+
     while (1) {
         // Lock the mutex due to the LVGL APIs are not thread-safe
         lvgl_port_lock(-1);
@@ -250,28 +242,6 @@ void Display::lvgl_port_task(void *arg)
 
         switch (choose_page)
         {
-        // case PAGE::MAIN:
-        //     switch (MAIN_PAGE::step)
-        //     {
-        //     case MAIN_PAGE::STEP::CREATE:
-        //         MAIN_PAGE::onCreate();
-        //         previousMillis = millis();
-        //         MAIN_PAGE::step = MAIN_PAGE::STEP::UPDATE;
-        //         break;
-        //     case MAIN_PAGE::STEP::UPDATE:
-        //         vTaskDelay((50L * configTICK_RATE_HZ) / 1000L);    
-        //         MAIN_PAGE::onUpdate();
-        //         page_created = true;
-        //         if(page%5 == 1) MAIN_PAGE::step = MAIN_PAGE::STEP::DELETE;
-        //         break;
-        //     case MAIN_PAGE::STEP::DELETE:
-        //         MAIN_PAGE::onDelete();
-        //         MAIN_PAGE::step = MAIN_PAGE::STEP::CREATE;
-        //         choose_page = PAGE::BATTERY_DJI;
-        //         page_created = false;
-        //         break;
-        //     }
-        //     break;
         case PAGE::BATTERY_DJI:
             switch (BATTERY_DJI_PAGE::step)
             {
@@ -281,9 +251,10 @@ void Display::lvgl_port_task(void *arg)
                 break;
             case BATTERY_DJI_PAGE::STEP::UPDATE:
                 vTaskDelay((50L * configTICK_RATE_HZ) / 1000L); 
-                if((page%5 - 1) == 0 || (page%5 - 1) == 1) BATTERY_DJI_PAGE::onUpdate(page%5 - 1);
+                // if((page%5 - 1) == 0 || (page%5 - 1) == 1) BATTERY_DJI_PAGE::onUpdate(page%5 - 1);
+                BATTERY_DJI_PAGE::onUpdate(0);
                 page_created = true;
-                if(page%5 == 3) BATTERY_DJI_PAGE::step = BATTERY_DJI_PAGE::STEP::DELETE;
+                // if(page%5 == 3) BATTERY_DJI_PAGE::step = BATTERY_DJI_PAGE::STEP::DELETE;
                 break;
             case BATTERY_DJI_PAGE::STEP::DELETE:
                 BATTERY_DJI_PAGE::onDelete();
@@ -293,87 +264,54 @@ void Display::lvgl_port_task(void *arg)
                 break;
             }
             break;
-        // case PAGE::SYSTEM:
-        //     switch (SYSTEM_PAGE::step)
-        //     {
-        //     case SYSTEM_PAGE::SYSTEM_PAGE::CREATE:
-        //         SYSTEM_PAGE::onCreate();
-        //         SYSTEM_PAGE::step = SYSTEM_PAGE::STEP::UPDATE;
-        //         break;
-        //     case SYSTEM_PAGE::STEP::UPDATE:
-        //         vTaskDelay((50L * configTICK_RATE_HZ) / 1000L);  
-        //         SYSTEM_PAGE::onUpdate();
-        //         page_created = true;
-        //         if(page%5 == 4) {SYSTEM_PAGE::step = SYSTEM_PAGE::STEP::DELETE; page = 0;}
-        //         break;
-        //     case SYSTEM_PAGE::STEP::DELETE:
-        //         SYSTEM_PAGE::onDelete();
-        //         SYSTEM_PAGE::step = SYSTEM_PAGE::STEP::CREATE;
-        //         choose_page = PAGE::MAIN;
-        //         page_created = false;
-        //         break;
-        //     }
-        //     break;
         }
 
-        // if (choose_page > PAGE::BOOT)
-        // {
-        //     if (millis() - previousMillis >= 1000) 
-        //     {
-        //         previousMillis = millis(); // Cập nhật thời gian trước đó
-        //         lv_sys_seconds++; // Tăng biến đếm giây
-        //         if (lv_sys_seconds >= 60) 
-        //         {
-        //             lv_sys_seconds = 0; // Đặt lại giây
-        //             lv_sys_minutes++; // Tăng biến đếm phút
-        //         }
-        //         #if DISPLAY_UNIT_TEST == TRUE
-        //             if(lv_sys_seconds%20 == 2) MAIN_PAGE::step = MAIN_PAGE::STEP::DELETE;
-        //             if(lv_sys_seconds%20 == 5) BATTERY_DJI_PAGE::step = BATTERY_DJI_PAGE::STEP::DELETE;
-        //             if(lv_sys_seconds%20 == 9) BMS1_PAGE::step = BMS1_PAGE::STEP::DELETE;
-        //             if(lv_sys_seconds%20 == 13) BMS2_PAGE::step = BMS2_PAGE::STEP::DELETE;
-        //             if(lv_sys_seconds%20 == 17) SYSTEM_PAGE::step = SYSTEM_PAGE::STEP::DELETE;
-        //         #endif
-        //         FIX_FRAME::onUpdate((String)lv_sys_minutes + ":" + ((lv_sys_seconds < 10) ? "0" : "") +(String)lv_sys_seconds);
+        if (choose_page > PAGE::BOOT)
+        {
+            if (millis() - previousMillis >= 1000) 
+            {
+                previousMillis = millis(); // Cập nhật thời gian trước đó
+                lv_sys_seconds++; // Tăng biến đếm giây
+                if (lv_sys_seconds >= 60) 
+                {
+                    lv_sys_seconds = 0; // Đặt lại giây
+                    lv_sys_minutes++; // Tăng biến đếm phút
+                }
+                #if DISPLAY_UNIT_TEST == TRUE
+                    if(lv_sys_seconds%20 == 2) MAIN_PAGE::step = MAIN_PAGE::STEP::DELETE;
+                    if(lv_sys_seconds%20 == 5) BATTERY_DJI_PAGE::step = BATTERY_DJI_PAGE::STEP::DELETE;
+                    if(lv_sys_seconds%20 == 9) BMS1_PAGE::step = BMS1_PAGE::STEP::DELETE;
+                    if(lv_sys_seconds%20 == 13) BMS2_PAGE::step = BMS2_PAGE::STEP::DELETE;
+                    if(lv_sys_seconds%20 == 17) SYSTEM_PAGE::step = SYSTEM_PAGE::STEP::DELETE;
+                #endif
+                FIX_FRAME::onUpdate((String)lv_sys_minutes + ":" + ((lv_sys_seconds < 10) ? "0" : "") +(String)lv_sys_seconds);
                 
-        //         for (uint8_t i = 0; i < 2; i++)
-        //         {
-        //             if(batfr::capacity[i] > 0 && batfr::current[i] > 1000 && batfr::voltage[i] > 40000)
-        //             {
-        //                 batfr::seconds[i]++; 
-        //                 if (batfr::seconds[i] >= 60) 
-        //                 {
-        //                     batfr::seconds[i] = 0; 
-        //                     batfr::minutes[i]++; 
-        //                 }
-        //                 batfr::charging[i] = true;
-        //             }
-        //             else
-        //             {
-        //                 if(batfr::capacity[i] > 0) {}
-        //                 else
-        //                 {
-        //                     batfr::seconds[i] = 0;
-        //                     batfr::minutes[i] = 0; 
-        //                 }
+                for (uint8_t i = 0; i < 2; i++)
+                {
+                    if(batfr::capacity[i] > 0 && batfr::current[i] > 1000 && batfr::voltage[i] > 40000)
+                    {
+                        batfr::seconds[i]++; 
+                        if (batfr::seconds[i] >= 60) 
+                        {
+                            batfr::seconds[i] = 0; 
+                            batfr::minutes[i]++; 
+                        }
+                        batfr::charging[i] = true;
+                    }
+                    else
+                    {
+                        if(batfr::capacity[i] > 0) {}
+                        else
+                        {
+                            batfr::seconds[i] = 0;
+                            batfr::minutes[i] = 0; 
+                        }
                         
-        //                 batfr::charging[i] = false;
-        //             }
-        //         }
-        //     }
-        // }
-
-        // if(state_value == 1) 
-        // {
-        //     if(lv_sys_seconds%10 == 9) page++;
-        //     unit_test(&lv_time);
-        // }
-        // else if(state_value == 2)
-        // {
-        //     batfr::reset();
-        //     sysfr::reset();
-        //     state_value = 0;
-        // }
+                        batfr::charging[i] = false;
+                    }
+                }
+            }
+        }
 
         vTaskDelay(pdMS_TO_TICKS(task_delay_ms));
     }
@@ -453,58 +391,3 @@ void Display::on_create_lv_line(lv_obj_t **obj,
     lv_obj_clear_flag(*obj,LV_OBJ_FLAG_SCROLLABLE);
 }
 
-void Display::unit_test(uint32_t *_time)
-{
-    if((millis() - *_time) > 1000)
-    {
-        for (uint8_t k = 0; k < 2; k++)
-        {
-            switch (random(0, 5))
-            {
-            case 0:
-                batfr::capacity[k] = BATTERY_TYPE::BATTERY_UNKNOWN;
-                break;
-            case 1:
-                batfr::capacity[k] = BATTERY_TYPE::BATTERY_T20P;
-                break;
-            case 2:
-                batfr::capacity[k] = BATTERY_TYPE::BATTERY_T25;
-                break;
-            case 3:
-                batfr::capacity[k] = BATTERY_TYPE::BATTERY_T30;
-                break;
-            case 4:
-                batfr::capacity[k] = BATTERY_TYPE::BATTERY_T40;
-                break;
-            case 5:
-                batfr::capacity[k] = BATTERY_TYPE::BATTERY_T50;
-                break;
-            }
-            batfr::voltage[k] = random(50000, 59000);
-            batfr::current[k] = random(-50000, 138000);
-            batfr::percent[k] = random(0, 100);
-            batfr::temperature[k] = random(250, 800);
-            batfr::countError[k] = random(0, 255);
-            batfr::numberCharge[k] = random(0, 2000);
-            for (uint8_t i = 0; i < 4; i++) batfr::version[k][i] = random(0, 16);   
-            for (uint8_t i = 0; i < 14; i++) batfr::seriNumber[k][i] = random(48, 122);  
-            for (uint8_t i = 0; i < BATTERY_DJI_CELL_NUM; i++) batfr::cell[k][i] = random(3000, 4200);
-
-        }
-        
-        sysfr::num_ins = random(0, 4);
-        for (uint8_t i = 0; i < 3; i++) 
-        {
-            sysfr::input_voltage[i] = random(21000, 24000)/100.0;
-            sysfr::input_freq[i] = random(4800, 5100)/100.0;
-            sysfr::input_current[i] = random(0, 1000)/100.0;
-            sysfr::input_temp[i] = random(2000, 4000)/100.0;
-            sysfr::efficiency[i] = random(9000, 10000)/100.0;
-            sysfr::output_voltage[i] = random(5000, 6000)/100.0;
-            sysfr::output_current[i] = random(0, 6000)/100.0;
-            sysfr::output_current_max[i] = random(0, 6000)/100.0;
-            sysfr::output_temp[i] = random(2000, 4000)/100.0;
-        }
-        *_time = millis();
-    }
-}

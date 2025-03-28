@@ -17,6 +17,7 @@ void setup(){
   // init Display
   displayDevice.init();
 
+  // Create Task score 
   xTaskCreatePinnedToCore(TaskBattery, "TaskDisplay", 4096, NULL, 1, &TaskBattery_Handler, 1 );
   xTaskCreatePinnedToCore(TaskData, "TaskDataHandler", 4096, NULL, 1, &TaskData_Handler, 1);
 
@@ -43,27 +44,29 @@ void TaskBattery(void *pvParameters){
 
 void TaskData(void *pvParameters){
   while(1){
+
+    //update batfr to display 
+
+    //number
     Display::batfr::capacity[0] = batteryDevice.get.capacity;
     Display::batfr::percent[0] = batteryDevice.get.percent;
     Display::batfr::voltage[0] = batteryDevice.get.voltage;
     Display::batfr::current[0] = batteryDevice.get.current;
     Display::batfr::temperature[0] = batteryDevice.get.temperature;
     Display::batfr::numberCharge[0] = batteryDevice.get.numberCharge;
+
+    // string 
     for (int i = 0; i < 4; i++) {
       Display::batfr::version[0][i] = batteryDevice.get.version[i];
     }
-
     for (int i = 0; i < 14; i++) {
       Display::batfr::seriNumber[0][i] = batteryDevice.get.seriNumber[i];
     }
-
     for(int i =0 ; i < 14; i++){
       Display::batfr::cell[0][i] = batteryDevice.get.cell[i];
     }
-
     Display::batfr::countError[0] = batteryDevice.get.countError;
   
-    Serial.println(batteryDevice.get.capacity);
-    vTaskDelay(1000);
+    vTaskDelay(100);
   }
 }

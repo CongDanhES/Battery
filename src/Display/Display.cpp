@@ -2,6 +2,7 @@
 
 // Khởi tạo biến tĩnh
 HardwareSerial *Display::debugPort = nullptr;
+
 // Định nghĩa các biến
 ESP_Panel *Display::panel = nullptr; // Hoặc khởi tạo theo cách bạn cần
 SemaphoreHandle_t Display::lvgl_mux = nullptr;
@@ -13,21 +14,23 @@ uint8_t Display::state_value = 2;
 char Display::digit_buffer[10] = {0};
 uint8_t Display::choose_page = 2;
 uint8_t Display::bms_instance = 0;
-bool Display::batfr::active[2] = {false, false};
-bool Display::batfr::charging[2] = {false, false};
-uint8_t Display::batfr::seriNumber[2][14] = {{0}, {0}};
-uint8_t Display::batfr::version[2][4] = {{0}, {0}};
-uint16_t Display::batfr::voltage[2] = {0, 0};
-int32_t Display::batfr::current[2] = {0, 0};
-uint8_t Display::batfr::percent[2] = {0, 0};
-uint16_t Display::batfr::cell[2][14] = {{0}, {0}};
-int16_t Display::batfr::numberCharge[2] = {0, 0};
-uint16_t Display::batfr::temperature[2] = {0, 0};
-uint16_t Display::batfr::capacity[2] = {0, 0};
-uint8_t Display::batfr::countError[2] = {0, 0};
-uint8_t Display::batfr::led[2] = {0, 0};
-int Display::batfr::seconds[2] = {0, 0};
-int Display::batfr::minutes[2] = {0, 0};
+
+// batfr
+bool Display::batfr::active = false;
+bool Display::batfr::charging = false;
+uint8_t Display::batfr::seriNumber[14] = {0};
+uint8_t Display::batfr::version[4] = {0};
+uint16_t Display::batfr::voltage = 0;
+int32_t Display::batfr::current = 0;
+uint8_t Display::batfr::percent = 0;
+uint16_t Display::batfr::cell[14] = {0};
+int16_t Display::batfr::numberCharge = 0;
+uint16_t Display::batfr::temperature = 0;
+uint16_t Display::batfr::capacity = 0;
+uint8_t Display::batfr::countError = 0;
+uint8_t Display::batfr::led = 0;
+int Display::batfr::seconds = 0;
+int Display::batfr::minutes = 0;
 
 // Định nghĩa các thành viên tĩnh
 lv_obj_t* Display::g_value[NUM_OBJ_TITLE] = {nullptr};
@@ -36,9 +39,7 @@ lv_obj_t* Display::g_obj[NUM_OBJ] = {nullptr};
 lv_style_t Display::g_style[NUM_STYLE];
 lv_style_t Display::g_font[NUM_FONT];
 
-// lv_obj_t* Display::BOOT_PAGE::logo = nullptr; // Hoặc giá trị khởi tạo khác nếu cần
-// lv_anim_t* Display::BOOT_PAGE::animation = nullptr; // Hoặc giá trị khởi tạo khác nếu cần
-
+// FIX_FRAMES
 lv_style_t Display::FIX_FRAME::main_panel_style ;
 lv_obj_t *Display::FIX_FRAME::main_panel = nullptr;
 bool Display::FIX_FRAME::checkCreate = true;
@@ -49,16 +50,7 @@ lv_obj_t *Display::FIX_FRAME::lb_clock_obj = nullptr;
 lv_style_t Display::FIX_FRAME::font_vni_n;
 lv_style_t Display::FIX_FRAME::font_vni_g_b;
 lv_obj_t* Display::FIX_FRAME::logo_charge = nullptr;
-
-// update logo
-lv_obj_t* Display::FIX_FRAME::logo = nullptr;
-
-// uint8_t Display::MAIN_PAGE::step = 0;
-// lv_point_t Display::MAIN_PAGE::line_points[] = { {0, 0}, {0, (int32_t)(ESP_PANEL_LCD_V_RES*0.73)}};
-// lv_point_t Display::MAIN_PAGE::line_points1[] = { {0, 0}, {(int32_t)(ESP_PANEL_LCD_H_RES*0.94), 0}};
-// lv_point_t Display::MAIN_PAGE::line_pointsPW1[] = { {0, 0}, {34, 0}};
-// lv_point_t Display::MAIN_PAGE::line_pointsPW2[] = { {0, 0}, {34, 0}};
-// bool Display::MAIN_PAGE::checkCreate = true;
+lv_obj_t* Display::FIX_FRAME::logo = nullptr; // update logo from Mainpage
 
 uint8_t Display::BATTERY_DJI_PAGE::step = 0;
 lv_color_t Display::BATTERY_DJI_PAGE::battery_color_percent;
@@ -66,9 +58,6 @@ lv_style_t Display::BATTERY_DJI_PAGE::cell_style_border[BMS_CELL_NUM] = {};
 lv_style_t Display::BATTERY_DJI_PAGE::cell_style_bg[BMS_CELL_NUM] = {};
 lv_obj_t  *Display::BATTERY_DJI_PAGE::cell_bar[BMS_CELL_NUM] = {nullptr};
 lv_obj_t  *Display::BATTERY_DJI_PAGE::cell_lb[BMS_CELL_NUM] = {nullptr};
-
-// uint8_t Display::SYSTEM_PAGE::step = 0;
-// String Display::SYSTEM_PAGE::s_temp = "";
 
 Display::Display(HardwareSerial &debugPort) 
 {
@@ -251,10 +240,8 @@ void Display::lvgl_port_task(void *arg)
                 break;
             case BATTERY_DJI_PAGE::STEP::UPDATE:
                 vTaskDelay((50L * configTICK_RATE_HZ) / 1000L); 
-                // if((page%5 - 1) == 0 || (page%5 - 1) == 1) BATTERY_DJI_PAGE::onUpdate(page%5 - 1);
                 BATTERY_DJI_PAGE::onUpdate(0);
                 page_created = true;
-                // if(page%5 == 3) BATTERY_DJI_PAGE::step = BATTERY_DJI_PAGE::STEP::DELETE;
                 break;
             case BATTERY_DJI_PAGE::STEP::DELETE:
                 BATTERY_DJI_PAGE::onDelete();
@@ -277,38 +264,29 @@ void Display::lvgl_port_task(void *arg)
                     lv_sys_seconds = 0; // Đặt lại giây
                     lv_sys_minutes++; // Tăng biến đếm phút
                 }
-                #if DISPLAY_UNIT_TEST == TRUE
-                    if(lv_sys_seconds%20 == 2) MAIN_PAGE::step = MAIN_PAGE::STEP::DELETE;
-                    if(lv_sys_seconds%20 == 5) BATTERY_DJI_PAGE::step = BATTERY_DJI_PAGE::STEP::DELETE;
-                    if(lv_sys_seconds%20 == 9) BMS1_PAGE::step = BMS1_PAGE::STEP::DELETE;
-                    if(lv_sys_seconds%20 == 13) BMS2_PAGE::step = BMS2_PAGE::STEP::DELETE;
-                    if(lv_sys_seconds%20 == 17) SYSTEM_PAGE::step = SYSTEM_PAGE::STEP::DELETE;
-                #endif
+                
                 FIX_FRAME::onUpdate((String)lv_sys_minutes + ":" + ((lv_sys_seconds < 10) ? "0" : "") +(String)lv_sys_seconds);
                 
-                for (uint8_t i = 0; i < 2; i++)
+                if(batfr::capacity > 0 && batfr::current > 1000 && batfr::voltage > 40000)
                 {
-                    if(batfr::capacity[i] > 0 && batfr::current[i] > 1000 && batfr::voltage[i] > 40000)
+                    batfr::seconds++; 
+                    if (batfr::seconds >= 60) 
                     {
-                        batfr::seconds[i]++; 
-                        if (batfr::seconds[i] >= 60) 
-                        {
-                            batfr::seconds[i] = 0; 
-                            batfr::minutes[i]++; 
-                        }
-                        batfr::charging[i] = true;
+                        batfr::seconds = 0; 
+                        batfr::minutes++; 
                     }
+                    batfr::charging = true;
+                }
+                else
+                {
+                    if(batfr::capacity > 0) {}
                     else
                     {
-                        if(batfr::capacity[i] > 0) {}
-                        else
-                        {
-                            batfr::seconds[i] = 0;
-                            batfr::minutes[i] = 0; 
-                        }
-                        
-                        batfr::charging[i] = false;
+                        batfr::seconds = 0;
+                        batfr::minutes = 0; 
                     }
+                    
+                    batfr::charging = false;
                 }
             }
         }

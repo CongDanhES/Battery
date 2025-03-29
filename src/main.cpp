@@ -29,43 +29,56 @@ void loop(){
 
 void TaskBattery(void *pvParameters){
   while(1){
-    // Serial.println("TaskDisPlay");
-    //batteryDevice.update(Serial);
-    // Display::batfr::capacity[0] = Display::BATTERY_TYPE::BATTERY_T30;
-    // Display::batfr::percent[0] = random(1, 100);
-    // Display::batfr::voltage[0] = random(1, 10000);
-    // Display::batfr::current[0] = random(1, 10000);
-    // Display::batfr::temperature[0] = random(1, 100);
-    // Display::batfr::numberCharge[0] = random(1, 10000);
+
+    // update battery to get data
     batteryDevice.update(Serial1);
     vTaskDelay(1);
+
   }
 }
 
 void TaskData(void *pvParameters){
+  //update batfr to display 
   while(1){
 
-    //update batfr to display 
+    //update number
+    Display::batfr::capacity = batteryDevice.get.capacity;
+    Display::batfr::percent = batteryDevice.get.percent;
+    Display::batfr::voltage = batteryDevice.get.voltage;
+    Display::batfr::current = batteryDevice.get.current;
+    Display::batfr::temperature = batteryDevice.get.temperature;
+    Display::batfr::numberCharge = batteryDevice.get.numberCharge;
 
-    //number
-    Display::batfr::capacity[0] = batteryDevice.get.capacity;
-    Display::batfr::percent[0] = batteryDevice.get.percent;
-    Display::batfr::voltage[0] = batteryDevice.get.voltage;
-    Display::batfr::current[0] = batteryDevice.get.current;
-    Display::batfr::temperature[0] = batteryDevice.get.temperature;
-    Display::batfr::numberCharge[0] = batteryDevice.get.numberCharge;
-
-    // string 
+    // update string 
     for (int i = 0; i < 4; i++) {
-      Display::batfr::version[0][i] = batteryDevice.get.version[i];
+      Display::batfr::version[i] = batteryDevice.get.version[i];
     }
     for (int i = 0; i < 14; i++) {
-      Display::batfr::seriNumber[0][i] = batteryDevice.get.seriNumber[i];
+      Display::batfr::seriNumber[i] = batteryDevice.get.seriNumber[i];
     }
     for(int i =0 ; i < 14; i++){
-      Display::batfr::cell[0][i] = batteryDevice.get.cell[i];
+      Display::batfr::cell[i] = batteryDevice.get.cell[i];
     }
-    Display::batfr::countError[0] = batteryDevice.get.countError;
+    Display::batfr::countError = batteryDevice.get.countError;
+    if(Display::batfr::countError >= 195){
+      Display::batfr::reset();
+      batteryDevice.get.capacity = 0;
+      batteryDevice.get.percent = 0;
+      batteryDevice.get.voltage = 0;
+      batteryDevice.get.current = 0;
+      batteryDevice.get.temperature = 0;
+      batteryDevice.get.numberCharge = 0;
+      for (int i = 0; i < 4; i++) {
+        batteryDevice.get.version[i] = 0;
+      }
+      for (int i = 0; i < 14; i++) {
+        batteryDevice.get.seriNumber[i] = 0;
+      }
+      for(int i =0 ; i < 14; i++){
+        batteryDevice.get.cell[i] = 0;
+      }
+      // batteryDevice.get.countError = 0;
+    }
   
     vTaskDelay(100);
   }

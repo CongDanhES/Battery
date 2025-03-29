@@ -798,7 +798,7 @@ bool DJIBattery::update(HardwareSerial &debugPort)
     return true;
 }
 
-bool DJIBattery::updateT25T50(HardwareSerial &debugPort)
+bool DJIBattery::updateT25T50(HardwareSerial &debugPort)    
 {
     if (!lv_charge_t25t50_active)
     {

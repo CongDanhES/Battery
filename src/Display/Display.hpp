@@ -306,7 +306,7 @@ private:
         {
             //debugPort->printf("ins: %d \n", ins);
             // battery Name
-            switch (batfr::capacity[ins])
+            switch (batfr::capacity)
             {
             case BATTERY_TYPE::BATTERY_UNKNOWN:
                 lv_label_set_text(g_value[0], (ins == 0) ? "> N/A" : "< N/A");
@@ -328,29 +328,29 @@ private:
                 break;
             }
             // voltage
-            on_change_lv_label_text(g_value[3], (batfr::capacity[ins] > 0) ? String((float)(batfr::voltage[ins])/1000.0, 1): "00.0");
+            on_change_lv_label_text(g_value[3], (batfr::capacity > 0) ? String((float)(batfr::voltage)/1000.0, 1): "00.0");
             // current
-            on_change_lv_label_text(g_value[4], (batfr::capacity[ins] > 0) ? String((float)(batfr::current[ins])/1000.0, 1) : "00.0");
+            on_change_lv_label_text(g_value[4], (batfr::capacity > 0) ? String((float)(batfr::current)/1000.0, 1) : "00.0");
             // percent
-            on_change_lv_label_text(g_value[1], (batfr::capacity[ins] > 0) ? ((batfr::percent[ins] < 10) ? "0" : "" ) + (String)batfr::percent[ins]: "00");
-            lv_arc_set_value(g_obj[0], (batfr::capacity[ins] > 0) ? batfr::percent[ins] : 0);
+            on_change_lv_label_text(g_value[1], (batfr::capacity > 0) ? ((batfr::percent < 10) ? "0" : "" ) + (String)batfr::percent: "00");
+            lv_arc_set_value(g_obj[0], (batfr::capacity > 0) ? batfr::percent : 0);
             // temperature
-            on_change_lv_label_text(g_value[5], (batfr::capacity[ins] > 0) ? String((float)(batfr::temperature[ins])/10.0, 1): "00.0");
+            on_change_lv_label_text(g_value[5], (batfr::capacity > 0) ? String((float)(batfr::temperature)/10.0, 1): "00.0");
             // numbercharge
-            on_change_lv_label_text(g_value[6], (batfr::capacity[ins] > 0) ? String(batfr::numberCharge[ins]): "0000");
+            on_change_lv_label_text(g_value[6], (batfr::capacity > 0) ? String(batfr::numberCharge): "0000");
             // version
-            on_change_lv_label_text(g_value[7], (batfr::capacity[ins] > 0) ? (String)batfr::version[ins][0] + "." + (String)batfr::version[ins][1] + "." + (String)batfr::version[ins][2] + "." + (String)batfr::version[ins][3]: "N/A"); // update sau
+            on_change_lv_label_text(g_value[7], (batfr::capacity > 0) ? (String)batfr::version[0] + "." + (String)batfr::version[1] + "." + (String)batfr::version[2] + "." + (String)batfr::version[3]: "N/A"); // update sau
             // seri number
             char _tempSN[14]= {};
-            for (uint8_t i = 0; i < 14; i++) _tempSN[i] = (char)batfr::seriNumber[ins][i];
-            lv_label_set_text(g_value[8], (batfr::capacity[ins] > 0) ? _tempSN : "N/A");
+            for (uint8_t i = 0; i < 14; i++) _tempSN[i] = (char)batfr::seriNumber[i];
+            lv_label_set_text(g_value[8], (batfr::capacity > 0) ? _tempSN : "N/A");
             // error
-            on_change_lv_label_text(g_value[9], (batfr::capacity[ins] > 0) ? (String)batfr::countError[ins] : "N/A");
+            on_change_lv_label_text(g_value[9], (batfr::capacity > 0) ? (String)batfr::countError : "N/A");
             // cell
             uint16_t _tempCell = 0;
             for (uint8_t i = 0; i < BATTERY_DJI_CELL_NUM; i++)
             { 
-                if(batfr::capacity[ins] > 0) _tempCell = map(batfr::cell[ins][i], 3000, 4250, 0, 100);
+                if(batfr::capacity > 0) _tempCell = map(batfr::cell[i], 3000, 4250, 0, 100);
                 else _tempCell= 0;
                 // 0 - 10% do
                 if(_tempCell <= 10)  lv_style_set_bg_color(&cell_style_border[i], lv_color_hex(0xDF0000));
@@ -360,19 +360,19 @@ private:
                 if(_tempCell > 20 && _tempCell <= 100) lv_style_set_bg_color(&cell_style_border[i], lv_color_make(0x0A, 0xA6, 0x53));
 
                 lv_bar_set_value(cell_bar[i], _tempCell, LV_ANIM_ON);
-                on_change_lv_label_text(cell_lb[i] , (batfr::capacity[ins] > 0) ? String((float)(batfr::cell[ins][i])/1000.0, 2): "00.0"); // Đặt số ban đầu
+                on_change_lv_label_text(cell_lb[i] , (batfr::capacity > 0) ? String((float)(batfr::cell[i])/1000.0, 2): "00.0"); // Đặt số ban đầu
             }
 
             // color
-            if(batfr::percent[ins] <= 10)
+            if(batfr::percent <= 10)
             {
                 battery_color_percent = lv_color_hex(0xDF0000);
             }
-            if (batfr::percent[ins] <= 20 && batfr::percent[ins] > 10)
+            if (batfr::percent <= 20 && batfr::percent > 10)
             {
                 battery_color_percent = lv_color_hex(0xE2E755);
             }
-            if(batfr::percent[ins] > 20)
+            if(batfr::percent > 20)
             {
                 battery_color_percent = lv_color_make(0x0A, 0xA6, 0x53);
             }
@@ -411,42 +411,41 @@ public:
     
     struct batfr
     {
-        static bool active[2];
-        static bool charging[2];
-        static uint8_t seriNumber[2][14];
-        static uint8_t version[2][4];
-        static uint16_t voltage[2];
-        static int32_t current[2];
-        static uint8_t percent[2];
-        static uint16_t cell[2][14];
-        static int16_t numberCharge[2];
-        static uint16_t temperature[2];
-        static uint16_t capacity[2];
-        static uint8_t countError[2];
-        static uint8_t led[2];
-        static int seconds[2]; 
-        static int minutes[2]; 
+        static bool active;
+        static bool charging;
+        static uint8_t seriNumber[14];
+        static uint8_t version[4];
+        static uint16_t voltage;
+        static int32_t current;
+        static uint8_t percent;
+        static uint16_t cell[14];
+        static int16_t numberCharge;
+        static uint16_t temperature;
+        static uint16_t capacity;
+        static uint8_t countError;
+        static uint8_t led;
+        static int seconds; 
+        static int minutes; 
         // Hàm để reset toàn bộ biến về 0
         static void reset() {
-            for (uint8_t i = 0; i < 2; ++i) {
-                active[i] = false;
-                charging[i] = false;
-                memset(seriNumber[i], 0, sizeof(seriNumber[i]));
-                memset(version[i], 0, sizeof(version[i]));
-                voltage[i] = 0;
-                current[i] = 0;
-                percent[i] = 0;
-                memset(cell[i], 0, sizeof(cell[i]));
-                numberCharge[i] = 0;
-                temperature[i] = 0;
-                capacity[i] = 0;
-                countError[i] = 0;
-                led[i] = 0;
-                seconds[i] = 0;
-                minutes[i] = 0;
-            }
+            active = false;
+            charging = false;
+            memset(seriNumber, 0, sizeof(seriNumber));
+            memset(version, 0, sizeof(version));
+            voltage = 0;
+            current = 0;
+            percent = 0;
+            memset(cell, 0, sizeof(cell));
+            numberCharge = 0;
+            temperature = 0;
+            capacity = 0;
+            countError = 0;
+            led = 0;
+            seconds = 0;
+            minutes = 0;
         }
     };
+
 
     enum PAGE
     {
